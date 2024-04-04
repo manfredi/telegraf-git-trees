@@ -7,17 +7,28 @@ def git_trees(owner, repo, path, type, measurement, branch='master') -> None:
     """
     See https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28
     See https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28
+    See https://docs.github.com/en/rest/rate-limit/rate-limit?apiVersion=2022-11-28
     Note: The limit for unauthenticated requests is 60 requests per hour.
     Note: The limit for the tree array is 100,000 entries with a maximum size of 7 MB when using the recursive parameter.
     Print output as Line Protocol
     See https://docs.influxdata.com/influxdb/cloud/reference/syntax/line-protocol/
     """
-    api_url = f'https://api.github.com/repos/{owner}/{repo}/git/trees/{branch}?recursive=1'
-    r = requests.get(api_url)
+    rate_limit_url = 'https://api.github.com/rate_limit'
+    r = requests.get(rate_limit_url)
     r.raise_for_status()
     json = r.json()
-    files = [ item["path"] for item in json["tree"] if item["path"].startswith(path) and item["path"].endswith(type)]
-    count = len(files)
+    remaining = int(json["resources"]["core"]["remaining"])
+
+    if remaining > 0:
+        api_url = f'https://api.github.com/repos/{owner}/{repo}/git/trees/{branch}?recursive=1'
+        r = requests.get(api_url)
+        r.raise_for_status()
+        json = r.json()
+        files = [ item["path"] for item in json["tree"] if item["path"].startswith(path) and item["path"].endswith(type)]
+        count = len(files)
+    else:
+        count = 0
+
     print(f'{measurement},owner={owner},repo={repo},branch={branch},path={path} count={count}i')
 
 if __name__ == "__main__":
