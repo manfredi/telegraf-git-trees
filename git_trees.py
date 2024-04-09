@@ -29,7 +29,7 @@ def git_trees(owner, repo, path, type, measurement, branch='master') -> None:
     else:
         count = 0
 
-    print(f'{measurement},owner={owner},repo={repo},branch={branch},path={path} count={count}i')
+    print(f'{measurement},owner={owner},repo={repo},branch={branch},path={path},type={type} count={count}i')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
